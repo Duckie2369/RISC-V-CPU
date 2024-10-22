@@ -1,11 +1,43 @@
-\m4_TLV_version 1d: tl-x.org
+\m5_TLV_version 1d: tl-x.org
+\m5
+   use(m5-1.0)
 \SV
    // This code can be found in: https://github.com/stevehoover/LF-Building-a-RISC-V-CPU-Core/risc-v_shell.tlv
    
-   m4_include_lib(['https://raw.githubusercontent.com/stevehoover/LF-Building-a-RISC-V-CPU-Core/main/lib/risc-v_shell_lib.tlv'])
+   m4_include_lib(['https://raw.githubusercontent.com/stevehoover/LF-Building-a-RISC-V-CPU-Core/df57c0c25435c0ddac3555df620b4fc5bd535e30/lib/risc-v_shell_lib.tlv'])
+
+\m5
+   assemble_imem(['
+      # /====================\
+      # | Sum 1 to 9 Program |
+      # \====================/
+      #
+      # Program to test RV32I
+      # Add 1,2,3,...,9 (in that order).
+      #
+      # Regs:
+      #  x12 (a2): 10
+      #  x13 (a3): 1..10
+      #  x14 (a4): Sum
+      # 
+      reset:
+         ADDI x14, x0, 0          # Initialize sum register x14 with 0
+         ADDI x12, x0, 10         # Store count of 10 in register x12.
+         ADDI x13, x0, 1          # Initialize loop count register x13 to 1
+      loop:
+         ADD x14, x13, x14        # Incremental summation
+         ADDI x13, x13, 1         # Increment loop count by 1
+         BLT x13, x12, loop       # If a3 is less than a2, repeat
+         ADDI x30, x14, -44       # Subtract expected value of 44 to set x30 to 1 if and only iff the result is 45 (1 + 2 + ... + 9).
+         BGE x0, x0, 0            # Done. Jump to itself (infinite loop).
+   '])
+\SV
+   m5_makerchip_module   // (Expanded in Nav-TLV pane.)
+   m5_my_defs
+   /* verilator lint_on WIDTH */
 
 
-
+   /**
    //---------------------------------------------------------------------------------
    // /====================\
    // | Sum 1 to 9 Program |
@@ -32,12 +64,8 @@
    m4_asm_end()
    m4_define(['M4_MAX_CYC'], 50)
    //---------------------------------------------------------------------------------
+   **/
 
-
-
-\SV
-   m4_makerchip_module   // (Expanded in Nav-TLV pane.)
-   /* verilator lint_on WIDTH */
 \TLV
    
    $reset = *reset;
@@ -53,6 +81,6 @@
    
    //m4+rf(32, 32, $reset, $wr_en, $wr_index[4:0], $wr_data[31:0], $rd_en1, $rd_index1[4:0], $rd_data1, $rd_en2, $rd_index2[4:0], $rd_data2)
    //m4+dmem(32, 32, $reset, $addr[4:0], $wr_en, $wr_data[31:0], $rd_en, $rd_data)
-   m4+cpu_viz()
+   m5+cpu_viz()
 \SV
    endmodule
